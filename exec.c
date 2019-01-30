@@ -4,8 +4,14 @@
 #include <stdio.h>
 #include <string.h>
 
+void lame()
+{
+
+}
+
 int main(void)
 {
+  printf("o world");
   pid_t child_pid=fork();
   int status;
 
@@ -17,9 +23,13 @@ int main(void)
   } */
   if (child_pid == 0)
  {
+   fork();
+  fork();
 
-     execl("/bin/ls", "cd", "/Documents", NULL);
+
+
  }
   waitpid(child_pid,&status,0);
+
   return 0;
 }

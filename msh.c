@@ -13,7 +13,6 @@
 int main(void)
 {
 
-
   char *token[MAX_NUM_ARGUMENTS];
   //while(*token!="exit"){
   char input[100];
@@ -42,6 +41,7 @@ while(cmd_str!="exit"){
         }
           token_count++;
       }
+      token[token_count-1]=NULL;
 
       int token_index  = 0;
       for( token_index = 0; token_index < token_count; token_index ++ )
@@ -51,14 +51,23 @@ while(cmd_str!="exit"){
   free( working_root );
 
 
-
+char file[1];
+file[0]=*token[0];
   pid_t pid=fork();
+
   if (pid==0)
   {
-    //printf("%s",token[1]);
-  execl("/bin/ls",token[0],token[1], NULL);
-  pid_t pid=fork();
-  printf("\nAli Abdel Aziz");
+
+
+  if (execvp(token[0],token) == -1)
+  {
+    int res = execvp(token[0], token);
+    printf ("%s\n",strerror(errno));
+
+  }
+
+  execvp(token[0],token);
+
 
    }
 }
