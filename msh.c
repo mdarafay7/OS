@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <signal.h>
 
+#define CMD_LOG "bash_history"
 #define WHITESPACE " \t\n"      // We want to split our command line up into tokens                                // will separate the tokens on our command line
 #define MAX_COMMAND_SIZE 255    // The maximum command-line size
 #define MAX_NUM_ARGUMENTS 5     // Mav shell only supports five arguments
@@ -17,7 +18,7 @@ int main(void)
   //while(*token!="exit"){
   char input[100];
   char * cmd_str = (char*) malloc( MAX_COMMAND_SIZE );
-while(cmd_str!="exit"){
+//while(cmd_str!="exit"){
 
   printf("\nmsh>");
 
@@ -58,18 +59,34 @@ file[0]=*token[0];
   if (pid==0)
   {
 
+//  int res = execvp(token[0], token);
+  if (token[0]=="history") {
 
+    execvp("/usr/bin",)
+  }
   if (execvp(token[0],token) == -1)
   {
-    int res = execvp(token[0], token);
-    printf ("%s\n",strerror(errno));
+
 
   }
 
-  execvp(token[0],token);
+  if(execvp("/usr/local/bin ",token)== -1)
+  {
 
+  }
 
+  if(execvp("/usr/bin",token) == -1)
+  {
+
+  }
+  if(execvp("/bin",token) == -1)
+  {
+
+  }
+
+printf("\nCommand Not Found");
    }
-}
+//}
 exit(0);
+
 }
