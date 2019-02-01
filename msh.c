@@ -9,17 +9,18 @@
 #define CMD_LOG "bash_history"
 #define WHITESPACE " \t\n" // We want to split our command line up into tokens                                // will separate the tokens on our command line
 #define MAX_COMMAND_SIZE 255 // The maximum command-line size
-# define MAX_NUM_ARGUMENTS 5 // Mav shell only supports five arguments
+#define MAX_NUM_ARGUMENTS 5 // Mav shell only supports five arguments
 
 int main(void) {
   FILE * fp;
-
+  int cd=1;
   char * token[MAX_NUM_ARGUMENTS];
   //while(*token!="exit"){
   char input[100];
   char * cmd_str = (char * ) malloc(MAX_COMMAND_SIZE);
-  fp = fopen("bash_history", "w+");
-  while (cmd_str != "exit") {
+  fp = fopen("bash_history.txt", "w+");
+  while (cmd_str != "exit")
+   {
 
     printf("\nmsh>");
 
@@ -52,10 +53,19 @@ int main(void) {
     fclose(fp);
     char file[1];
     file[0] = * token[0];
-    pid_t pid = fork();
+ cd= strcmp(token[0],"cd");
+ if(!cd)
+    {
+      chdir(token[1]);
+      continue;
+    }
 
-    if (pid == 0) {
 
+   pid_t pid = fork();
+
+
+ if (pid == 0) {
+      //printf("as sas");
       //  int res = execvp(token[0], token);
 
       if (execvp(token[0], token) == -1) {
@@ -74,7 +84,10 @@ int main(void) {
       }
 
       printf("\nCommand Not Found");
+
+
     }
+
   }
 
 }
