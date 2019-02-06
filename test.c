@@ -1,100 +1,169 @@
-// The MIT License (MIT)
-//
-// Copyright (c) 2016, 2017 Trevor Bakker
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
-
-#define _GNU_SOURCE
-
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include <stdlib.h>
-#include <errno.h>
 #include <string.h>
+#include <errno.h>
 #include <signal.h>
+#define _GNU_SOURCE
+#define CMD_LOG "bash_history"
+#define WHITESPACE " \t\n" // We want to split our command line up into tokens                                // will separate the tokens on our command line
+#define MAX_COMMAND_SIZE 255 // The maximum command-line size
+#define MAX_NUM_ARGUMENTS 5 // Mav shell only supports five arguments
 
-#define WHITESPACE " \t\n"      // We want to split our command line up into tokens
-                                // so we need to define what delimits our tokens.
-                                // In this case  white space
-                                // will separate the tokens on our command line
 
-#define MAX_COMMAND_SIZE 255    // The maximum command-line size
 
-#define MAX_NUM_ARGUMENTS 5     // Mav shell only supports five arguments
-
-int main()
+static void handle_signal(int sig)
 {
-
-  char * cmd_str = (char*) malloc( MAX_COMMAND_SIZE );
-
-  while( 1 )
+  switch(sig)
   {
-    // Print out the msh prompt
-    printf ("msh> ");
+    case SIGINT:
+      break;
+
+    case SIGTSTP:
+      pause();
+
+  }
+}
+
+int main(void) {
+  struct sigaction act;
+  memset(&act,'\0',sizeof(act));
+  act.sa_handler=&handle_signal;
+  if (sigaction(SIGINT , &act,NULL) < 0) {
+  perror ("sigaction: ");
+  return 1;
+}
+  if (sigaction(SIGTSTP, &act,NULL) < 0) {
+  perror ("sigaction: ");
+  return 1;
+  }
+
+  FILE * fp;
+  int cd = 1;
+  char * token[MAX_NUM_ARGUMENTS];
+  int counter = 0;
+  int pid_store[100];
+  char input[100];
+
+
+
+
+  char * cmd_str = (char * ) malloc(MAX_COMMAND_SIZE);
+  fp = fopen("bash_history.txt", "w+");
+  while (cmd_str != "exit") {
+
+    printf("msh> ");
 
     // Read the command from the commandline.  The
     // maximum command that will be read is MAX_COMMAND_SIZE
     // This while command will wait here until the user
     // inputs something since fgets returns NULL when there
     // is no input
-    while( !fgets (cmd_str, MAX_COMMAND_SIZE, stdin) );
-    printf("1");
-    /* Parse input */
-    char *token[MAX_NUM_ARGUMENTS];
+    while ( !fgets(cmd_str, MAX_COMMAND_SIZE, stdin) );
 
-    int   token_count = 0;
+    /* Parse input */
+    char * token[MAX_NUM_ARGUMENTS];
+
+    int token_count = 0;
 
     // Pointer to point to the token
     // parsed by strsep
-    char *arg_ptr;
+    char * arg_ptr;
 
-    char *working_str  = strdup( cmd_str );
+    char * working_str = strdup(cmd_str);
 
     // we are going to move the working_str pointer so
     // keep track of its original value so we can deallocate
     // the correct amount at the end
-    char *working_root = working_str;
+    char * working_root = working_str;
 
     // Tokenize the input stringswith whitespace used as the delimiter
-    while ( ( (arg_ptr = strsep(&working_str, WHITESPACE ) ) != NULL) &&
-              (token_count<MAX_NUM_ARGUMENTS))
-    {
-      token[token_count] = strndup( arg_ptr, MAX_COMMAND_SIZE );
-      if( strlen( token[token_count] ) == 0 )
-      {
+    while (((arg_ptr = strsep( & working_str, WHITESPACE)) != NULL) &&
+      (token_count < MAX_NUM_ARGUMENTS)) {
+      token[token_count] = strndup(arg_ptr, MAX_COMMAND_SIZE);
+      if (strlen(token[token_count]) == 0) {
         token[token_count] = NULL;
       }
-        token_count++;
+      token_count++;
     }
 
-    // Now print the tokenized input as a debug check
-    // \TODO Remove this code and replace with your shell functionality
-
-    int token_index  = 0;
-    for( token_index = 0; token_index < token_count; token_index ++ )
+    if(token[0]==NULL)
     {
-      printf("token[%d] = %s\n", token_index, token[token_index] );
+      continue;
+    }
+    int i;
+    for (i = 0; i < token_count; i++) {
+    //printf("%s",token[i]);
+    fprintf(fp, token[i]);
+    fprintf(fp, " ");
+    }
+    fprintf(fp,"\n");
+    fprintf(fp,'\0');
+
+    cd = strcmp(token[0], "cd");
+    if (!cd) {
+      chdir(token[1]);
+      continue;
+    }
+    if (!strcmp(token[0], "history")) {
+      printf("Alsi Abdel Aziz");
+      char str[999];
+      if (fp) {
+        int n = 0;
+        while (fscanf(fp, "%s", str) != EOF) {
+          printf("%d: %s", n, str);
+          n++;
+        }
+        continue;
+      }
     }
 
-    free( working_root );
 
-  }
-  return 0;
+    if (!strcmp(token[0], "exit") || !strcmp(token[0], "quit")) {
+      exit(0);
+    }
+    if (!strcmp(token[0], "listpids")) {
+      int x;
+      for (x = 0; x<counter; x++) {
+
+        printf("%d) %d\n",x, pid_store[x]);
+      }
+      continue;
+    }
+
+    while (!strcmp(token[0], "\n") || !strcmp(token[0], "\n")) {
+      continue;
+    }
+
+    int pid = fork();
+    fflush(stdout);
+
+
+
+    if(pid==0){
+      execvp(token[0], token);
+      execvp("/usr/local/bin ", token);
+      execvp("/usr/bin", token);
+      execvp("/bin", token);
+      printf("Command Not Found");
+      exit(EXIT_SUCCESS);
+
+
+    }
+
+    int status;
+    waitpid(pid, &status, 0 );
+    counter++;
+    printf("%d",counter);
+    pid_store[counter-1]=pid;
+
+
+
+    }
+  fclose(fp);
+
+
+
+
 }

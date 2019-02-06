@@ -11,7 +11,7 @@ void lame()
 
 int main(void)
 {
-  printf("o world");
+
   pid_t child_pid=fork();
   int status;
 

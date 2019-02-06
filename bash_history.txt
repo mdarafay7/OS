@@ -1,9 +1,3 @@
-ls  SH‰ûH‹?‹KH‹sD‹C¶‡ 
-cd  SH‰ûH‹?‹KH‹sD‹C¶‡ 
-cd OS  …À‹L$@L‹”$ˆ 
-ls   
-cd ..  …À‹L$@L‹”$ˆ 
-ls   
-rm foo  …À‹L$@L‹”$ˆ 
-rm -f foo   
-exit  foo 
+top  
+ls  
+exit  

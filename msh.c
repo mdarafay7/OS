@@ -20,13 +20,14 @@ int main(void) {
   int counter = 0;
   int pid_store[100];
   char input[100];
-  pid_store[counter]=(int)getpid;
-  counter++;
+
+
 
 
   char * cmd_str = (char * ) malloc(MAX_COMMAND_SIZE);
   fp = fopen("bash_history.txt", "w+");
   while (cmd_str != "exit") {
+
     printf("msh> ");
 
     // Read the command from the commandline.  The
@@ -67,8 +68,9 @@ int main(void) {
       continue;
     }
     int i;
-    for (i = 0; i <= token_count; i++) {
-      fprintf(fp, token[i]);
+    for (i = 0; i < token_count; i++) {
+    //printf("%s",token[i]);
+    fprintf(fp, token[i]);
     fprintf(fp, " ");
     }
     fprintf(fp,"\n");
@@ -80,7 +82,7 @@ int main(void) {
       continue;
     }
     if (!strcmp(token[0], "history")) {
-      printf("Ali Abdel Aziz");
+      printf("Alsi Abdel Aziz");
       char str[999];
       if (fp) {
         int n = 0;
@@ -92,14 +94,15 @@ int main(void) {
       }
     }
 
+
     if (!strcmp(token[0], "exit") || !strcmp(token[0], "quit")) {
       exit(0);
     }
     if (!strcmp(token[0], "listpids")) {
       int x;
-      for (x = 0; x <= counter; x++) {
+      for (x = 0; x<counter; x++) {
 
-        printf("%d    ", pid_store[x]);
+        printf("%d) %d\n",x, pid_store[x]);
       }
       continue;
     }
@@ -108,37 +111,33 @@ int main(void) {
       continue;
     }
 
-    pid_t pid = fork();
+    int pid = fork();
+    fflush(stdout);
 
-    // printf("%d",(int)getpid);
 
-    if (pid == 0) {
 
-      if (execvp(token[0], token) == -1) {
+    if(pid==0){
+      execvp(token[0], token);
+      execvp("/usr/local/bin ", token);
+      execvp("/usr/bin", token);
+      execvp("/bin", token);
+      printf("Command Not Found");
+      exit(EXIT_SUCCESS);
 
-      }
-
-      if (execvp("/usr/local/bin ", token) == -1) {
-
-      }
-
-      if (execvp("/usr/bin", token) == -1) {
-
-      }
-      if (execvp("/bin", token) == -1) {
-
-      }
-
-      printf("\nCommand Not Found");
-
-    } else {
-      int status;
-      waitpid(pid, & status, 0);
 
     }
+
+    int status;
+    waitpid(pid, &status, 0 );
+    counter++;
+    printf("%d",counter);
+    pid_store[counter-1]=pid;
+
+
+
     }
-    fclose(fp);
-    exit(0);
+  fclose(fp);
+
 
 
 
