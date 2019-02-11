@@ -12,24 +12,56 @@
 #define MAX_NUM_ARGUMENTS 5 // Mav shell only supports five arguments
 
 
+
+static void handle_signal(int sig)
+{
+  pid_t pid;
+  int status;
+  switch(sig)
+  {
+    case SIGINT:
+      break;
+
+    case SIGTSTP:
+      pid = waitpid(-1, &status, WNOHANG);
+      break;
+  }
+}
+
 int main(void) {
+  int signal_check=0;
+  struct sigaction act;
+  memset(&act,'\0',sizeof(act));
+  act.sa_handler=&handle_signal;
+  if (sigaction(SIGINT , &act,NULL) < 0) {
+      signal_check=1;
+      perror ("sigaction: ");
+      return 1;
+    }
+  if (sigaction(SIGTSTP, &act,NULL) < 0) {
+  signal_check=1;
+  perror ("sigaction: ");
+  return 1;
+  }
 
   FILE * fp;
   int cd = 1;
   char * token[MAX_NUM_ARGUMENTS];
+  char *history[50][50];
   int counter = 0;
   int pid_store[100];
   char input[100];
-
-
+  size_t len=0;
+  ssize_t read;
+  int i,x;
 
 
   char * cmd_str = (char * ) malloc(MAX_COMMAND_SIZE);
-  fp = fopen("bash_history.txt", "w+");
+
   while (cmd_str != "exit") {
 
     printf("msh> ");
-
+    signal_check=0;
     // Read the command from the commandline.  The
     // maximum command that will be read is MAX_COMMAND_SIZE
     // This while command will wait here until the user
@@ -63,18 +95,34 @@ int main(void) {
       token_count++;
     }
 
+
     if(token[0]==NULL)
     {
       continue;
     }
-    int i;
-    for (i = 0; i < token_count; i++) {
-    //printf("%s",token[i]);
-    fprintf(fp, token[i]);
-    fprintf(fp, " ");
-    }
-    fprintf(fp,"\n");
-    fprintf(fp,'\0');
+    if(!strncmp(token[0],"!",1))
+      {
+        x=0;
+        char cmd[2];
+        strncpy(cmd,*token+1,2);
+        int pos=atoi(cmd);
+        while(history[pos][x])
+        {
+          token[x]=history[pos][x];
+          x++;
+        }
+
+
+      }
+
+
+for (i = 0; i < token_count-1; i++) {
+  history[counter][i]=token[i];
+}
+
+
+
+    //fprintf(fp,'\0');
 
     cd = strcmp(token[0], "cd");
     if (!cd) {
@@ -82,17 +130,21 @@ int main(void) {
       continue;
     }
     if (!strcmp(token[0], "history")) {
-      printf("Alsi Abdel Aziz");
-      char str[999];
-      if (fp) {
-        int n = 0;
-        while (fscanf(fp, "%s", str) != EOF) {
-          printf("%d: %s", n, str);
-          n++;
+      int y=1;
+      for (x = 0; x<=counter; x++) {
+
+        printf("%d) %s",x, history[x][0]);
+        while(history[x][y])
+        {
+          printf(" %s",history[x][y]);
+          y++;
         }
+        printf("\n");
+      }
+
         continue;
       }
-    }
+
 
 
     if (!strcmp(token[0], "exit") || !strcmp(token[0], "quit")) {
@@ -104,7 +156,7 @@ int main(void) {
 
         printf("%d) %d\n",x, pid_store[x]);
       }
-      continue;
+
     }
 
     while (!strcmp(token[0], "\n") || !strcmp(token[0], "\n")) {
@@ -117,6 +169,8 @@ int main(void) {
 
 
     if(pid==0){
+
+      fflush(stdout);
       execvp(token[0], token);
       execvp("/usr/local/bin ", token);
       execvp("/usr/bin", token);
@@ -127,18 +181,49 @@ int main(void) {
 
     }
 
-    int status;
-    waitpid(pid, &status, 0 );
-    counter++;
-    printf("%d",counter);
-    pid_store[counter-1]=pid;
+    if(!signal_check)
+    { int status;
+      waitpid(pid, &status, 0 );
+      if(counter>14)
+      {
+        for(i=0;i<counter;i++)
+        {
+          pid_store[i]=pid_store[i+1];
+        }
+        pid_store[14]=pid;
 
+      }
+      else{
+        pid_store[counter]=pid;
+        counter++;
+      }
+      fflush( NULL );
+    }
+
+    else
+    {
+      int status;
+      pause();
+      if(counter>14)
+      {
+        for(i=0;i<counter;i++)
+        {
+          pid_store[i]=pid_store[i+1];
+        }
+        pid_store[14]=pid;
+        counter--;
+      }
+      else{
+        pid_store[counter]=pid;
+        counter++;
+      }
+
+      fflush( NULL );
+
+    }
+
+}
 
 
     }
-  fclose(fp);
-
-
-
-
-}
+  //fclose(fp);
