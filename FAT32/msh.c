@@ -11,6 +11,7 @@ ID: 1001331625
 #include <stdint.h>
 #include <ctype.h>
 #include <signal.h>
+#include <limits.h>
 #define CMD_LOG "bash_history"
 #define WHITESPACE " \t\n" // We want to split our command line up into tokens
 #define MAX_COMMAND_SIZE 255
@@ -63,29 +64,13 @@ int main(void) {
       char *working_root = working_str;
       if(strchr(working_str,'/') != NULL){
       slasher=1;
-      arg_ptr=strsep(&working_str,WHITESPACE);
-      token[token_count] = strndup( arg_ptr, MAX_COMMAND_SIZE );
-      if( strlen( token[token_count] ) == 0 )
-      {
-        token[token_count] = NULL;
-      }
-        token_count++;
-
-
-      while ( ( (arg_ptr = strsep(&working_str, slash ) ) != NULL) &&
-                (token_count<MAX_NUM_ARGUMENTS))
-      {
-        token[token_count] = strndup( arg_ptr, MAX_COMMAND_SIZE );
-        if( strlen( token[token_count] ) == 0 )
-        {
-          token[token_count] = NULL;
-        }
-          token_count++;
-      }
     }
-
     else{
       normal=1;
+    }
+
+
+
       while ( ( (arg_ptr = strsep(&working_str, WHITESPACE ) ) != NULL) &&
                 (token_count<MAX_NUM_ARGUMENTS))
       {
@@ -96,7 +81,13 @@ int main(void) {
         }
           token_count++;
       }
+
+    int token_index  = 0;
+    for( token_index = 0; token_index < token_count; token_index ++ )
+    {
+      printf("token[%d] = %s\n", token_index, token[token_index] );
     }
+
     fp=fopen("fat32.img","r+");
     if (token[0] == NULL) {
       continue;
@@ -131,6 +122,12 @@ int main(void) {
         printf("mfs>Error: File system not open.\n");
       }
     }
+
+    if(!strcmp(token[0],"get"))
+    {
+
+    }
+
     if(!strcmp(token[0],"ls"))
     {
       int i;
@@ -194,7 +191,54 @@ int main(void) {
     }
     else
     {
-      printf("AAAAAAAAAAAA");
+  char *ptr = strtok(token[1],"/");
+	while(ptr!=NULL)
+	{
+    printf("\n%s\n",ptr);
+
+      for(i=0;i<200;i++)
+      {
+
+
+
+        strncpy( expanded_name,ptr, strlen(ptr) );
+
+
+        expanded_name[11] = '\0';
+        int z;
+        for( z = 0; z < 11; z++ )
+        {
+            expanded_name[z] = toupper( expanded_name[z] );
+        }
+
+        if(!strncmp( expanded_name,dir[i].DIR_NAME, 11 ))
+        {
+          //printf("\n%d %d\n",p,token_count);
+
+          int offset=((dir[i].DIR_FirstClusterLow-2)*info1.bytes_per_sec)+(info1.bytes_per_sec*info1.res_sec_count)+(info1.num_fats*info1.fat_size_32*info1.bytes_per_sec);
+          for(x=0;x<=16;x++)
+          {
+            fseek(fp,offset+(32*x),SEEK_SET);
+            fread(&dir[x].DIR_NAME,11,1,fp);
+            fread(&dir[x].DIR_Attr,1,1,fp);
+            fseek(fp,8,SEEK_CUR);
+            fread(&dir[x].DIR_FirstClusterHigh,2,1,fp);
+            fseek(fp,4,SEEK_CUR);
+            fread(&dir[x].DIR_FirstClusterLow,2,1,fp);
+            fread(&dir[x].DIR_FileSize,4,1,fp);
+
+          }
+
+          printf("They matched");
+          //break;
+
+        }
+
+
+      }
+      ptr = strtok(NULL,"/");
+
+    }
     }
       if(!x)
       {
