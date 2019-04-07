@@ -45,11 +45,41 @@ struct directory_entry
 
 int directory_filler;
 
+long int findSize(char file_name[])
+{
+    // opening the file in read mode
+    FILE* fp = fopen(file_name, "r");
 
+    // checking if the file exist or not
+    if (fp == NULL) {
+        printf("File Not Found!\n");
+        return -1;
+    }
+
+    fseek(fp, 0L, SEEK_END);
+
+    // calculating the size of the file
+    long int res = ftell(fp);
+
+    // closing the file
+    fclose(fp);
+
+    return res;
+}
+
+int16_t NextLB(FILE *fp,uint32_t sector,int16_t bytes_per_sec,int16_t res_sec_count)
+{
+  uint32_t FATAddress=(bytes_per_sec*res_sec_count)+(sector*4);
+  int16_t val;
+  fseek(fp,FATAddress,SEEK_SET);
+  fread(&val,2,1,fp);
+  return val;
+}
 
 int main(void) {
   struct information info1;
   struct directory_entry dir[200];
+  struct directory_entry putstore[200];
   char * token[MAX_NUM_ARGUMENTS];
   char * cmd_str = (char * ) malloc(MAX_COMMAND_SIZE);
   FILE *fp;
@@ -122,6 +152,63 @@ int main(void) {
         printf("mfs>Error: File system not open.\n");
       }
     }
+    if(!strcmp(token[0],"put"))
+    {
+      FILE *fp2=fopen(token[1],"r");
+      long int file_size,size_available,next_block;
+      size_available=512;
+      int i,end=0;
+      int32_t sector;
+      file_size=findSize(token[1]);
+      printf("\n%ld\n",file_size);
+      /*for(i=0;i<16;i++)
+      {
+        fseek(fp,info1.first_data_sector+(32*i),SEEK_SET);
+        fread(&dir[i].DIR_NAME,11,1,fp);
+       if(dir[i].DIR_NAME[0]==0||dir[i].DIR_NAME[0]=='\xe5')
+        {
+          sector=dir[i].DIR_FirstClusterLow;
+          while(end!=-1)
+          {
+
+            size_available=size_available+512;
+            sector=end;
+            end=NextLB(fp,sector,info1.bytes_per_sec,info1.res_sec_count);
+            printf("\n%d\n",end);
+
+          }*/
+
+        //  if(size_available>=file_size)
+          //{
+          for(i=0;i<16;i++)
+          {
+          if(dir[i].DIR_NAME[0]==0||dir[i].DIR_NAME[0]=='\xe5')
+           {
+
+            sector=dir[i].DIR_FirstClusterLow;
+            int x;
+            strcpy(dir[i].DIR_NAME,token[1]);
+            fseek(fp,info1.first_data_sector+(32*i),SEEK_SET);
+            fwrite(dir[i].DIR_NAME,11,1,fp);
+            //printf("%")
+            char copy[512];
+              while(!feof(fp2))
+              {
+                printf("IN HEREEE");
+                fread(copy,512,1,fp2);
+                fseek(fp,((sector-2)*info1.bytes_per_sec)+(info1.bytes_per_sec*info1.res_sec_count)+(info1.num_fats*info1.fat_size_32*info1.bytes_per_sec),SEEK_SET);
+                fwrite(copy,512,1,fp);
+                sector=NextLB(fp,sector,info1.bytes_per_sec,info1.res_sec_count);
+              }
+              break;
+            }
+          }
+        //}
+}
+
+    //  }
+    //}
+
 
     if(!strcmp(token[0],"get"))
     {
@@ -173,12 +260,59 @@ int main(void) {
           fclose(fp2);
           break;
 
-            
+
         }
 
       }
     }
+    if(!strcmp(token[0],"read"))
+    {
+      char copy[10];
+      memset(copy, ' ', 10);
+      strcpy(copy,token[1]);
+      int i,x=0;
+      char expanded_name[12];
+      memset( expanded_name, ' ', 12 );
+      for(i=0;i<200;i++)
+      {
+        char *token1 = strtok(token[1], "." );
 
+        strncpy( expanded_name, token1, strlen( token1 ) );
+
+        token1 = strtok( NULL, "." );
+
+        if( token1 )
+        {
+          strncpy( (char*)(expanded_name+8), token1, strlen(token1 ) );
+        }
+
+        expanded_name[11] = '\0';
+        int z;
+        for( z = 0; z < 11; z++ )
+        {
+          expanded_name[z] = toupper( expanded_name[z] );
+        }
+        if(!strncmp( expanded_name,dir[i].DIR_NAME, 11 ))
+        {
+
+          int offset=((dir[i].DIR_FirstClusterLow-2)*info1.bytes_per_sec)+(info1.bytes_per_sec*info1.res_sec_count)+(info1.num_fats*info1.fat_size_32*info1.bytes_per_sec);
+          char text[dir[i].DIR_FileSize+1];
+          fseek(fp,offset+atoi(token[2]),SEEK_SET);
+          fread(text,atoi(token[3]),1,fp);
+          text[atoi(token[3])]='\0';
+          fflush(NULL);
+          fflush(stdout);
+          fflush(stdin);
+
+          printf("\n|%s|\n",text);
+
+          break;
+
+
+        }
+
+      }
+    }
     if(!strcmp(token[0],"ls"))
     {
       int i;
