@@ -56,13 +56,13 @@ int main(void) {
   while (strcmp(cmd_str, "exit") || strcmp(cmd_str, "quit")) {
     printf("mfs> ");
     int slasher=0,normal=0;
-      while( !fgets (cmd_str, MAX_COMMAND_SIZE, stdin) );
-      char *token[MAX_NUM_ARGUMENTS];
-      int   token_count = 0;
-      char *arg_ptr;
-      char *working_str  = strdup( cmd_str );
-      char *working_root = working_str;
-      if(strchr(working_str,'/') != NULL){
+    while( !fgets (cmd_str, MAX_COMMAND_SIZE, stdin) );
+    char *token[MAX_NUM_ARGUMENTS];
+    int   token_count = 0;
+    char *arg_ptr;
+    char *working_str  = strdup( cmd_str );
+    char *working_root = working_str;
+    if(strchr(working_str,'/') != NULL){
       slasher=1;
     }
     else{
@@ -71,16 +71,16 @@ int main(void) {
 
 
 
-      while ( ( (arg_ptr = strsep(&working_str, WHITESPACE ) ) != NULL) &&
-                (token_count<MAX_NUM_ARGUMENTS))
+    while ( ( (arg_ptr = strsep(&working_str, WHITESPACE ) ) != NULL) &&
+    (token_count<MAX_NUM_ARGUMENTS))
+    {
+      token[token_count] = strndup( arg_ptr, MAX_COMMAND_SIZE );
+      if( strlen( token[token_count] ) == 0 )
       {
-        token[token_count] = strndup( arg_ptr, MAX_COMMAND_SIZE );
-        if( strlen( token[token_count] ) == 0 )
-        {
-          token[token_count] = NULL;
-        }
-          token_count++;
+        token[token_count] = NULL;
       }
+      token_count++;
+    }
 
     int token_index  = 0;
     for( token_index = 0; token_index < token_count; token_index ++ )
@@ -125,28 +125,16 @@ int main(void) {
 
     if(!strcmp(token[0],"get"))
     {
-
-    }
-
-    if(!strcmp(token[0],"ls"))
-    {
-      int i;
-      for(i=0;i<=16;i++)
-      {
-        if((dir[i].DIR_Attr==0x01||dir[i].DIR_Attr==0x10)||(dir[i].DIR_Attr==0x20))
-        {
-        printf("%s\t",dir[i].DIR_NAME);
-        }
+      char cwd[PATH_MAX];
+      if (getcwd(cwd, sizeof(cwd)) != NULL) {
+        //printf("Current working dir: %s\n", cwd);
       }
-    }
-
-    if(!strcmp(token[0],"cd"))
-    {
+      char copy[10];
+      memset(copy, ' ', 10);
+      strcpy(copy,token[1]);
       int i,x=0;
       char expanded_name[12];
       memset( expanded_name, ' ', 12 );
-      if(slasher==0)
-      {
       for(i=0;i<200;i++)
       {
         char *token1 = strtok(token[1], "." );
@@ -164,82 +152,138 @@ int main(void) {
         int z;
         for( z = 0; z < 11; z++ )
         {
-            expanded_name[z] = toupper( expanded_name[z] );
+          expanded_name[z] = toupper( expanded_name[z] );
         }
         if(!strncmp( expanded_name,dir[i].DIR_NAME, 11 ))
         {
 
           int offset=((dir[i].DIR_FirstClusterLow-2)*info1.bytes_per_sec)+(info1.bytes_per_sec*info1.res_sec_count)+(info1.num_fats*info1.fat_size_32*info1.bytes_per_sec);
-          for(x=0;x<=16;x++)
-          {
-            fseek(fp,offset+(32*x),SEEK_SET);
-            fread(&dir[x].DIR_NAME,11,1,fp);
-            fread(&dir[x].DIR_Attr,1,1,fp);
-            fseek(fp,8,SEEK_CUR);
-            fread(&dir[x].DIR_FirstClusterHigh,2,1,fp);
-            fseek(fp,4,SEEK_CUR);
-            fread(&dir[x].DIR_FirstClusterLow,2,1,fp);
-            fread(&dir[x].DIR_FileSize,4,1,fp);
+          char text[dir[i].DIR_FileSize+1];
+          copy[10]='\0';
+          FILE *fp2=fopen(copy,"w+");
+          fseek(fp,offset,SEEK_SET);
+          fread(text,dir[i].DIR_FileSize,1,fp);
+          text[dir[i].DIR_FileSize]='\0';
+          fflush(NULL);
+          fflush(stdout);
+          fflush(stdin);
+          fprintf (fp2, "%s", text);
+          printf("\n|%s|\n",copy);
 
-          }
-
-          printf("They matched\n");
+          fclose(fp2);
           break;
+
+            
         }
 
       }
     }
-    else
+
+    if(!strcmp(token[0],"ls"))
     {
-  char *ptr = strtok(token[1],"/");
-	while(ptr!=NULL)
-	{
-    printf("\n%s\n",ptr);
-
-      for(i=0;i<200;i++)
+      int i;
+      for(i=0;i<=16;i++)
       {
-
-
-
-        strncpy( expanded_name,ptr, strlen(ptr) );
-
-
-        expanded_name[11] = '\0';
-        int z;
-        for( z = 0; z < 11; z++ )
+        if((dir[i].DIR_Attr==0x01||dir[i].DIR_Attr==0x10)||(dir[i].DIR_Attr==0x20))
         {
-            expanded_name[z] = toupper( expanded_name[z] );
+          printf("%s\t",dir[i].DIR_NAME);
         }
+      }
+    }
 
-        if(!strncmp( expanded_name,dir[i].DIR_NAME, 11 ))
+    if(!strcmp(token[0],"cd"))
+    {
+      int i,x=0;
+      char expanded_name[12];
+      memset( expanded_name, ' ', 12 );
+      if(slasher==0)
+      {
+        for(i=0;i<200;i++)
         {
-          //printf("\n%d %d\n",p,token_count);
+          char *token1 = strtok(token[1], "." );
 
-          int offset=((dir[i].DIR_FirstClusterLow-2)*info1.bytes_per_sec)+(info1.bytes_per_sec*info1.res_sec_count)+(info1.num_fats*info1.fat_size_32*info1.bytes_per_sec);
-          for(x=0;x<=16;x++)
+          strncpy( expanded_name, token1, strlen( token1 ) );
+
+          token1 = strtok( NULL, "." );
+
+          if( token1 )
           {
-            fseek(fp,offset+(32*x),SEEK_SET);
-            fread(&dir[x].DIR_NAME,11,1,fp);
-            fread(&dir[x].DIR_Attr,1,1,fp);
-            fseek(fp,8,SEEK_CUR);
-            fread(&dir[x].DIR_FirstClusterHigh,2,1,fp);
-            fseek(fp,4,SEEK_CUR);
-            fread(&dir[x].DIR_FirstClusterLow,2,1,fp);
-            fread(&dir[x].DIR_FileSize,4,1,fp);
-
+            strncpy( (char*)(expanded_name+8), token1, strlen(token1 ) );
           }
 
-          printf("They matched");
-          //break;
+          expanded_name[11] = '\0';
+          int z;
+          for( z = 0; z < 11; z++ )
+          {
+            expanded_name[z] = toupper( expanded_name[z] );
+          }
+          if(!strncmp( expanded_name,dir[i].DIR_NAME, 11 ))
+          {
+
+            int offset=((dir[i].DIR_FirstClusterLow-2)*info1.bytes_per_sec)+(info1.bytes_per_sec*info1.res_sec_count)+(info1.num_fats*info1.fat_size_32*info1.bytes_per_sec);
+            for(x=0;x<=16;x++)
+            {
+              fseek(fp,offset+(32*x),SEEK_SET);
+              fread(&dir[x].DIR_NAME,11,1,fp);
+              fread(&dir[x].DIR_Attr,1,1,fp);
+              fseek(fp,8,SEEK_CUR);
+              fread(&dir[x].DIR_FirstClusterHigh,2,1,fp);
+              fseek(fp,4,SEEK_CUR);
+              fread(&dir[x].DIR_FirstClusterLow,2,1,fp);
+              fread(&dir[x].DIR_FileSize,4,1,fp);
+
+            }
+
+            printf("They matched\n");
+            break;
+          }
 
         }
-
-
       }
-      ptr = strtok(NULL,"/");
+      else
+      {
+        char *ptr = strtok(token[1],"/");
+        while(ptr!=NULL)
+        {
+          printf("\n%s\n",ptr);
 
-    }
-    }
+          for(i=0;i<200;i++)
+          {
+            strncpy( expanded_name,ptr, strlen(ptr) );
+
+
+            expanded_name[11] = '\0';
+            int z;
+            for( z = 0; z < 11; z++ )
+            {
+              expanded_name[z] = toupper( expanded_name[z] );
+            }
+
+            if(!strncmp( expanded_name,dir[i].DIR_NAME, 11 ))
+            {
+              int offset=((dir[i].DIR_FirstClusterLow-2)*info1.bytes_per_sec)+(info1.bytes_per_sec*info1.res_sec_count)+(info1.num_fats*info1.fat_size_32*info1.bytes_per_sec);
+              for(x=0;x<=16;x++)
+              {
+                fseek(fp,offset+(32*x),SEEK_SET);
+                fread(&dir[x].DIR_NAME,11,1,fp);
+                fread(&dir[x].DIR_Attr,1,1,fp);
+                fseek(fp,8,SEEK_CUR);
+                fread(&dir[x].DIR_FirstClusterHigh,2,1,fp);
+                fseek(fp,4,SEEK_CUR);
+                fread(&dir[x].DIR_FirstClusterLow,2,1,fp);
+                fread(&dir[x].DIR_FileSize,4,1,fp);
+
+              }
+
+              printf("They matched");
+            }
+
+
+          }
+          ptr = strtok(NULL,"/");
+
+        }
+      }
       if(!x)
       {
         printf("\nNO SUCH FILE\n");
