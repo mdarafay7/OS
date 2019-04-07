@@ -161,25 +161,7 @@ int main(void) {
       int32_t sector;
       file_size=findSize(token[1]);
       printf("\n%ld\n",file_size);
-      /*for(i=0;i<16;i++)
-      {
-        fseek(fp,info1.first_data_sector+(32*i),SEEK_SET);
-        fread(&dir[i].DIR_NAME,11,1,fp);
-       if(dir[i].DIR_NAME[0]==0||dir[i].DIR_NAME[0]=='\xe5')
-        {
-          sector=dir[i].DIR_FirstClusterLow;
-          while(end!=-1)
-          {
 
-            size_available=size_available+512;
-            sector=end;
-            end=NextLB(fp,sector,info1.bytes_per_sec,info1.res_sec_count);
-            printf("\n%d\n",end);
-
-          }*/
-
-        //  if(size_available>=file_size)
-          //{
           for(i=0;i<16;i++)
           {
           if(dir[i].DIR_NAME[0]==0||dir[i].DIR_NAME[0]=='\xe5')
@@ -190,11 +172,19 @@ int main(void) {
             strcpy(dir[i].DIR_NAME,token[1]);
             fseek(fp,info1.first_data_sector+(32*i),SEEK_SET);
             fwrite(dir[i].DIR_NAME,11,1,fp);
+            fseek(fp,info1.first_data_sector+(32*i)+11,SEEK_SET);
+            dir[i].DIR_Attr=32;
+            fwrite(&dir[i].DIR_Attr,sizeof(int),1,fp);
+            dir[i].DIR_FileSize=file_size;
+            fseek(fp,info1.first_data_sector+(32*i)+28,SEEK_SET);
+            fwrite(&dir[i].DIR_FileSize,sizeof(uint32_t),4,fp);
+
+
             //printf("%")
             char copy[512];
               while(!feof(fp2))
               {
-                printf("IN HEREEE");
+              //  printf("IN HEREEE");
                 fread(copy,512,1,fp2);
                 fseek(fp,((sector-2)*info1.bytes_per_sec)+(info1.bytes_per_sec*info1.res_sec_count)+(info1.num_fats*info1.fat_size_32*info1.bytes_per_sec),SEEK_SET);
                 fwrite(copy,512,1,fp);
@@ -216,9 +206,8 @@ int main(void) {
       if (getcwd(cwd, sizeof(cwd)) != NULL) {
         //printf("Current working dir: %s\n", cwd);
       }
-      char copy[10];
-      memset(copy, ' ', 10);
-      strcpy(copy,token[1]);
+      char *copy;
+      copy=strdup(token[1]);
       int i,x=0;
       char expanded_name[12];
       memset( expanded_name, ' ', 12 );
@@ -241,9 +230,9 @@ int main(void) {
         {
           expanded_name[z] = toupper( expanded_name[z] );
         }
-        if(!strncmp( expanded_name,dir[i].DIR_NAME, 11 ))
+        if(!strncmp( expanded_name,dir[i].DIR_NAME, 11 )||!strcmp(copy,dir[i].DIR_NAME))
         {
-
+          printf("AAAAAAAAA");
           int offset=((dir[i].DIR_FirstClusterLow-2)*info1.bytes_per_sec)+(info1.bytes_per_sec*info1.res_sec_count)+(info1.num_fats*info1.fat_size_32*info1.bytes_per_sec);
           char text[dir[i].DIR_FileSize+1];
           copy[10]='\0';
@@ -255,7 +244,7 @@ int main(void) {
           fflush(stdout);
           fflush(stdin);
           fprintf (fp2, "%s", text);
-          printf("\n|%s|\n",copy);
+        //  printf("\n|asdsad %s sadsad|\n",text);
 
           fclose(fp2);
           break;
@@ -368,7 +357,7 @@ int main(void) {
 
             }
 
-            printf("They matched\n");
+          //  printf("They matched\n");
             break;
           }
 
@@ -462,8 +451,19 @@ int main(void) {
         fread(&dir[i].DIR_FirstClusterLow,2,1,fp);
         fread(&dir[i].DIR_FileSize,4,1,fp);
       }
-      printf("\n%c\n",dir[2].DIR_NAME[10]);
+      char *copy;
+      copy=strdup(token[1]);
+      int i,x=0;
+      char expanded_name[12];
+      memset( expanded_name, ' ', 12 );
+
+      for(i=0;i<=16;i++)
+      {
+
+      }
+
     }
+
   }
 
   //fseek(fp,info1.first_data_sector+(32*0)+11,SEEK_SET);
