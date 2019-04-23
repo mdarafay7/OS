@@ -116,19 +116,19 @@ int main(void) {
       token_count++;
     }
 
-
+    while (!strcmp(token[0], "\n") || !strcmp(token[0], "\n")) {
+      continue;
 
     //fp=fopen("fat32.img","r+");
     if (token[0] == NULL) {
       continue;
     }
-    if (!strcmp(token[0], "exit") || !strcmp(token[0], "quit")) {
+    else if (!strcmp(token[0], "exit") || !strcmp(token[0], "quit")) {
       exit(0);
     }
-    while (!strcmp(token[0], "\n") || !strcmp(token[0], "\n")) {
-      continue;
+
     }
-    if(!strcmp(token[0],"open"))
+     if(!strcmp(token[0],"open"))
     {
       if(fp)
       {
@@ -169,7 +169,7 @@ int main(void) {
       }
     }
 
-    if(!strcmp(token[0],"close"))
+    else if(!strcmp(token[0],"close"))
     {
       if(fp)
       {
@@ -182,7 +182,7 @@ int main(void) {
         printf("mfs>Error: File system not open.\n");
       }
     }
-    if(!strcmp(token[0],"put"))
+    else if(!strcmp(token[0],"put"))
     {
 
       if(fp==NULL)
@@ -232,7 +232,7 @@ int main(void) {
     //}
 
 
-    if(!strcmp(token[0],"get"))
+    else if(!strcmp(token[0],"get"))
     {
       if(fp==NULL)
       {
@@ -266,7 +266,7 @@ int main(void) {
         {
           expanded_name[z] = toupper( expanded_name[z] );
         }
-        if(!strncmp( expanded_name,dir[i].DIR_NAME, 11 )||!strcmp(copy,dir[i].DIR_NAME))
+        if(!strncmp( expanded_name,dir[i].DIR_NAME, 11 ))
         {
           if(dir[i].DIR_FileSize<=512)
           {
@@ -315,7 +315,7 @@ int main(void) {
 
       }
     }
-    if(!strcmp(token[0],"read"))
+    else if(!strcmp(token[0],"read"))
     {
       if(fp==NULL)
       {
@@ -371,7 +371,7 @@ int main(void) {
 
       }
     }
-    if(!strcmp(token[0],"ls"))
+    else if(!strcmp(token[0],"ls"))
     {
       if(fp==NULL)
       {
@@ -402,7 +402,13 @@ int main(void) {
               {
                 if(strncmp(reserve_dir[i].DIR_NAME,"\xe5",1)&&reserve_dir[i].DIR_NAME[0]!='.')
                 {
-                  printf("%s\t",reserve_dir[i].DIR_NAME);
+                  if(reserve_dir[i].DIR_Attr==0x10)
+                  {
+                    printf("\n.) %.9s\t",reserve_dir[i].DIR_NAME);
+                  }
+                  else{
+                  printf("\n.) %s\t",reserve_dir[i].DIR_NAME);
+                }
                 }
               }
               }
@@ -427,9 +433,12 @@ int main(void) {
             {
               if((reserve_dir[i].DIR_Attr==0x01||(reserve_dir[i].DIR_Attr==0x20))||(reserve_dir[i].DIR_Attr==0x10))
               {
-                if(strncmp(reserve_dir[i].DIR_NAME,"\xe5",1)&&reserve_dir[i].DIR_NAME[0]!='.')
+                if(reserve_dir[i].DIR_Attr==0x10)
                 {
-                  printf("%s\t",reserve_dir[i].DIR_NAME);
+                  printf("\n.) %.9s\t",reserve_dir[i].DIR_NAME);
+                }
+                else{
+                printf("\n.) %s\t",reserve_dir[i].DIR_NAME);
                 }
               }
 
@@ -443,7 +452,13 @@ int main(void) {
                 {
                   if(strncmp(dir[i].DIR_NAME,"\xe5",1)&&dir[i].DIR_NAME[0]!='.')
                   {
-                    printf("%s\t",dir[i].DIR_NAME);
+                    if(dir[i].DIR_Attr==0x10)
+                    {
+                      printf("\n.) %.9s\t",dir[i].DIR_NAME);
+                    }
+                    else{
+                    printf("\n.) %s\t",dir[i].DIR_NAME);
+                  }
                   }
                 }
               }
@@ -456,7 +471,13 @@ int main(void) {
               {
                 if(strncmp(dir[i].DIR_NAME,"\xe5",1)&&dir[i].DIR_NAME[0]!='.')
                 {
-                  printf("%s\t",dir[i].DIR_NAME);
+                  if(dir[i].DIR_Attr==0x10)
+                  {
+                    printf("\n.) %.9s\t",dir[i].DIR_NAME);
+                  }
+                  else{
+                  printf("\n.) %s\t",dir[i].DIR_NAME);
+                }
                 }
               }
 
@@ -464,7 +485,7 @@ int main(void) {
           }
         }
 
-        if(!strcmp(token[0],"cd"))
+        else if(!strcmp(token[0],"cd"))
         {
           if(fp==NULL)
           {
@@ -643,7 +664,7 @@ int main(void) {
           }
 
         }
-        if(!strcmp(token[0],"info"))
+        else if(!strcmp(token[0],"info"))
         {
           if(fp==NULL)
           {
@@ -663,16 +684,17 @@ int main(void) {
           fseek(fp,44,SEEK_SET);
           fread(&info1.root_cluster,4,1,fp);
           info1.first_data_sector=(info1.num_fats*info1.fat_size_32*info1.bytes_per_sec)+(info1.res_sec_count*info1.bytes_per_sec);
-          printf("BPB_BytesPerSec %d %x\n",info1.bytes_per_sec,info1.bytes_per_sec);
-          printf("BPB_SecPerClus %d %x\n",info1.sec_per_clus,info1.sec_per_clus);
-          printf("BPB_RsvdSecCnt %d %x\n",info1.res_sec_count,info1.res_sec_count);
-          printf("BPB_NumFATS %d %x\n",info1.num_fats,info1.num_fats);
-          printf("BPB_FATz32 %d %x\n",info1.fat_size_32,info1.fat_size_32);
+          printf("                 Decimal  HexaDecimal\n");
+          printf("BPB_BytesPerSec %d       %x\n",info1.bytes_per_sec,info1.bytes_per_sec);
+          printf("BPB_SecPerClus  %d         %x\n",info1.sec_per_clus,info1.sec_per_clus);
+          printf("BPB_RsvdSecCnt  %d        %x\n",info1.res_sec_count,info1.res_sec_count);
+          printf("BPB_NumFATS     %d         %x\n",info1.num_fats,info1.num_fats);
+          printf("BPB_FATz32      %d     %x\n",info1.fat_size_32,info1.fat_size_32);
 
 
         }
 
-        if(!strcmp(token[0],"stat"))
+        else if(!strcmp(token[0],"stat"))
         {
           if(fp==NULL)
           {
@@ -681,17 +703,6 @@ int main(void) {
           }
 
           int i,found=0;
-          for(i=0;i<=16;i++)
-          {
-            fseek(fp,info1.first_data_sector+(32*i),SEEK_SET);
-            fread(&dir[i].DIR_NAME,11,1,fp);
-            fread(&dir[i].DIR_Attr,1,1,fp);
-            fseek(fp,8,SEEK_CUR);
-            fread(&dir[i].DIR_FirstClusterHigh,2,1,fp);
-            fseek(fp,4,SEEK_CUR);
-            fread(&dir[i].DIR_FirstClusterLow,2,1,fp);
-            fread(&dir[i].DIR_FileSize,4,1,fp);
-          }
           char *copy;
           copy=strdup(token[1]);
           char expanded_name[12];
